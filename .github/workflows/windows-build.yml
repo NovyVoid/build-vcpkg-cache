@@ -36,18 +36,26 @@ jobs:
       - name: "Run CMake & Build"
         shell: pwsh
         run: |
-          # 1. Initialize the VS 2026 Environment
-          # This script is the "Magic Key" for VS 2026 on this runner
-          Import-Module "C:\Program Files\Microsoft Visual Studio\2026\Enterprise\Common7\Tools\Microsoft.VisualStudio.DevShell.dll"
-          Enter-VsDevShell -VsInstallPath "C:\Program Files\Microsoft Visual Studio\2026\Enterprise" -SkipAutomaticLocation -DevShellIndex 1
+          # 1. Initialize the VS 2026 Environment using the path you verified
+          $vsPath = "C:\Program Files\Microsoft Visual Studio\18\Enterprise"
+          $modulePath = "$vsPath\Common7\Tools\Microsoft.VisualStudio.DevShell.dll"
           
-          # 2. Verify we are actually using VS 2026
-          Write-Host "Checking Compiler Version..."
+          if (Test-Path $modulePath) {
+              Import-Module $modulePath
+              # Initialize for x64 architecture
+              Enter-VsDevShell -VsInstallPath $vsPath -SkipAutomaticLocation -DevShellIndex 1 -Arch x64
+          } else {
+              Write-Error "Could not find DevShell DLL at $modulePath"
+              exit 1
+          }
+
+          # 2. Verify the compiler is visible and correct (MSVC 19.4x or 19.5x)
           cl.exe
-          
-          # 3. Run the Build
+
+          # 3. Run CMake and Build
           $VCPKG_TOOLCHAIN = "${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake"
           
+          # -G "Visual Studio 18 2026" is the key for the new compiler
           cmake -B build -S . `
             -G "Visual Studio 18 2026" `
             -A x64 `
