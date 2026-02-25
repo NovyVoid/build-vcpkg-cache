@@ -24,17 +24,25 @@ jobs:
           git clone https://github.com/microsoft/vcpkg.git
           ./vcpkg/bootstrap-vcpkg.bat
 
-      - name: "Confirm Compiler Version"
-        run: |
-          & "C:\Program Files\Microsoft Visual Studio\2026\Enterprise\VC\Tools\MSVC\*\bin\Hostx64\x64\cl.exe" /?
-
       - name: "Run CMake & Build"
         shell: pwsh
         run: |
-          # Use an absolute path for vcpkg to be safe
-          $vcpkgToolchain = "${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake"
+          # 1. Initialize the VS 2026 Environment
+          # This script is the "Magic Key" for VS 2026 on this runner
+          Import-Module "C:\Program Files\Microsoft Visual Studio\2026\Enterprise\Common7\Tools\Microsoft.VisualStudio.DevShell.dll"
+          Enter-VsDevShell -VsInstallPath "C:\Program Files\Microsoft Visual Studio\2026\Enterprise" -SkipAutomaticLocation -DevShellIndex 1
           
-          # We put this on one line to avoid backtick/space errors
-          cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE="$vcpkgToolchain" -DVCPKG_TARGET_TRIPLET=x64-windows -G "Visual Studio 18 2026"
+          # 2. Verify we are actually using VS 2026
+          Write-Host "Checking Compiler Version..."
+          cl.exe
+          
+          # 3. Run the Build
+          $VCPKG_TOOLCHAIN = "${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake"
+          
+          cmake -B build -S . `
+            -G "Visual Studio 18 2026" `
+            -A x64 `
+            -DCMAKE_TOOLCHAIN_FILE="$VCPKG_TOOLCHAIN" `
+            -DVCPKG_TARGET_TRIPLET=x64-windows
             
           cmake --build build --config Release
