@@ -1,8 +1,8 @@
 {
-    "name" : "vs2026 vcpkg Build",
-    "version" : "1.0.0",
-    "dependencies" : [
-        "qt",
-        "opencv4"
-    ]
+  "name": "vs2026-vcpkg-build",
+  "version": "1.0.0",
+  "dependencies": [
+    "qtbase",
+    "opencv4"
+  ]
 }
