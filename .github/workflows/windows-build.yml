@@ -3,7 +3,8 @@ on: [push, pull_request]
 
 jobs:
   job:
-    runs-on: windows-latest
+    # 1. FIX: Use the specific VS 2026 image
+    runs-on: windows-2025-vs2026
     env:
       VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
     
@@ -18,22 +19,20 @@ jobs:
             core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
 
       - name: "Setup vcpkg"
-        # We use a specific version to ensure stability
+        shell: pwsh
         run: |
           git clone https://github.com/microsoft/vcpkg.git
           ./vcpkg/bootstrap-vcpkg.bat
 
       - name: "Run CMake & Build"
-        # vcpkg will automatically see vcpkg.json and start building
+        shell: pwsh
         run: |
+          # 2. FIX: Use the full path to the toolchain file
+          $VCPKG_PATH = "${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake"
+          
           cmake -B build -S . `
-            -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake `
+            -DCMAKE_TOOLCHAIN_FILE="$VCPKG_PATH" `
             -DVCPKG_TARGET_TRIPLET=x64-windows `
             -DVCPKG_INSTALL_OPTIONS="--clean-after-build"
+            
           cmake --build build --config Release
-
-      - name: "Upload Build Artifacts"
-        uses: actions/upload-artifact@v4
-        with:
-          name: MyProgram-Windows
-          path: build/Release/
