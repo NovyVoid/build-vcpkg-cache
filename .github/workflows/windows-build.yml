@@ -24,6 +24,15 @@ jobs:
           git clone https://github.com/microsoft/vcpkg.git
           ./vcpkg/bootstrap-vcpkg.bat
 
+      - name: "Find Visual Studio 2026 Path"
+        shell: pwsh
+        run: |
+          Get-ChildItem -Path "C:\Program Files\Microsoft Visual Studio" -Recurse -Depth 2 | Select-Object FullName
+          # Also check the common tools folder specifically
+          if (Test-Path "C:\Program Files\Microsoft Visual Studio\2026\Enterprise\Common7\Tools") {
+              ls "C:\Program Files\Microsoft Visual Studio\2026\Enterprise\Common7\Tools"
+          }
+
       - name: "Run CMake & Build"
         shell: pwsh
         run: |
