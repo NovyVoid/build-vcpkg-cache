@@ -34,32 +34,22 @@ jobs:
           }
 
       - name: "Run CMake & Build"
-        shell: pwsh
+        shell: cmd  # We switch to cmd here because it's the most stable way to load VS vars
         run: |
-          # 1. Initialize the VS 2026 Environment using the path you verified
-          $vsPath = "C:\Program Files\Microsoft Visual Studio\18\Enterprise"
-          $modulePath = "$vsPath\Common7\Tools\Microsoft.VisualStudio.DevShell.dll"
+          :: 1. Load the VS 18 (2026) Environment
+          call "C:\Program Files\Microsoft Visual Studio\18\Enterprise\Common7\Tools\VsDevCmd.bat" -arch=x64
           
-          if (Test-Path $modulePath) {
-              Import-Module $modulePath
-              # Initialize for x64 architecture
-              Enter-VsDevShell -VsInstallPath $vsPath -SkipAutomaticLocation -DevShellIndex 1 -Arch x64
-          } else {
-              Write-Error "Could not find DevShell DLL at $modulePath"
-              exit 1
-          }
-
-          # 2. Verify the compiler is visible and correct (MSVC 19.4x or 19.5x)
+          :: 2. Verify the version (Look for 19.50+ in your logs)
           cl.exe
-
-          # 3. Run CMake and Build
-          $VCPKG_TOOLCHAIN = "${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake"
           
-          # -G "Visual Studio 18 2026" is the key for the new compiler
-          cmake -B build -S . `
-            -G "Visual Studio 18 2026" `
-            -A x64 `
-            -DCMAKE_TOOLCHAIN_FILE="$VCPKG_TOOLCHAIN" `
+          :: 3. Run CMake and Build
+          :: Note: we use %GITHUB_WORKSPACE% because we are in 'cmd' now
+          set "VCPKG_TOOLCHAIN=%GITHUB_WORKSPACE%\vcpkg\scripts\buildsystems\vcpkg.cmake"
+          
+          cmake -B build -S . ^
+            -G "Visual Studio 18 2026" ^
+            -A x64 ^
+            -DCMAKE_TOOLCHAIN_FILE="%VCPKG_TOOLCHAIN%" ^
             -DVCPKG_TARGET_TRIPLET=x64-windows
             
           cmake --build build --config Release
