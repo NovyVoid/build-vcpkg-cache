@@ -24,6 +24,10 @@ jobs:
           git clone https://github.com/microsoft/vcpkg.git
           ./vcpkg/bootstrap-vcpkg.bat
 
+      - name: "Confirm Compiler Version"
+        run: |
+          & "C:\Program Files\Microsoft Visual Studio\2026\Enterprise\VC\Tools\MSVC\*\bin\Hostx64\x64\cl.exe" /?
+
       - name: "Run CMake & Build"
         shell: pwsh
         run: |
